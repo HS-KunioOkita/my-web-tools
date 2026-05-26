@@ -33,8 +33,8 @@ description: "Task list for 002-markdown-to-pdf"
 
 **Purpose**: 本フィーチャー固有の依存と Chromium ランタイムを揃える
 
-- [ ] T001 ランタイム依存を追加: `pnpm add markdown-it@^14 mermaid@^11 playwright@^1.60`、`pnpm add -D @types/markdown-it` → `package.json`, `pnpm-lock.yaml`
-- [ ] T002 Playwright Chromium バイナリの導入を確認 (devDeps の `@playwright/test` と共有): `pnpm exec playwright install chromium`。既存環境ならスキップ可、CI / 新規 clone では必須 → 副作用のみ (ファイル変更なし)
+- [X] T001 ランタイム依存を追加: `pnpm add markdown-it@^14 mermaid@^11 playwright@^1.60`、`pnpm add -D @types/markdown-it` → `package.json`, `pnpm-lock.yaml`
+- [X] T002 Playwright Chromium バイナリの導入を確認 (devDeps の `@playwright/test` と共有): `pnpm exec playwright install chromium`。既存環境ならスキップ可、CI / 新規 clone では必須 → 副作用のみ (ファイル変更なし)
 
 **Checkpoint**: `pnpm install` が成功し、`import { chromium } from "playwright"` が解決可能、`fc-list :lang=ja` が日本語フォントを返す (Linux のみ要確認、macOS/Windows は標準で OK)
 
@@ -46,17 +46,17 @@ description: "Task list for 002-markdown-to-pdf"
 
 **⚠️ CRITICAL**: 以下が揃うまで User Story の実装は開始できない
 
-- [ ] T003 [P] `lib/markdown-pdf/types.ts` を作成 (data-model.md §2 の `PdfTemplateId` / `PdfTemplate` / `RenderRequest` / `RenderArtifact` / `RenderErrorCode` を export。`CSSString = string` 型エイリアスも含む) → `lib/markdown-pdf/types.ts`
-- [ ] T004 [P] `lib/markdown-pdf/templates/_base.css` を作成 (contracts/templates.md §4 の共通レイアウト: `.markdown-pdf-root` スコープ + CSS 変数 `--mdpdf-*` + `@page { size: A4; margin: var(--mdpdf-page-margin); }` + 必須要素 `h1`〜`h6`/`p`/`ul`/`ol`/`table`/`pre code`/`blockquote`/`img`/`.mermaid` のベーススタイル) → `lib/markdown-pdf/templates/_base.css`
-- [ ] T005 [P] `lib/markdown-pdf/templates/standard.css` を作成 (`@import "./_base.css";` + 既定値の上書き: `--mdpdf-page-margin: 25mm`, `--mdpdf-font-base` は `-apple-system, "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif`, アクセント色 `#2563eb`) → `lib/markdown-pdf/templates/standard.css`
-- [ ] T006 [P] `lib/markdown-pdf/markdown.ts` を作成 (`markdown-it` を `{html: false, linkify: true, typographer: false}` で初期化、`md.renderer.rules.fence` をオーバライドして `info === "mermaid"` のとき `<div class="mermaid" data-mermaid-source="...">${escaped source}</div>` を返し、他言語フェンスは既定実装を呼ぶ。`renderMarkdown(source: string): string` を export) → `lib/markdown-pdf/markdown.ts`
-- [ ] T007 [P] `lib/markdown-pdf/filename.ts` を作成 (`buildContentDisposition(filenameBase: string): string` を export。RFC 5987 `filename*=UTF-8''...` と ASCII フォールバック `filename="..."` を返す。`.pdf` 拡張子は常に付与) → `lib/markdown-pdf/filename.ts`
-- [ ] T008 [P] `lib/markdown-pdf/chromium.ts` を作成 (Playwright `chromium.launch({headless: true, args: ["--no-sandbox"]})` をモジュールスコープでキャッシュする `getBrowser(): Promise<Browser>` を export。`process.on("exit"|"SIGINT"|"SIGTERM", dispose)` で `browser.close()` を呼ぶ) → `lib/markdown-pdf/chromium.ts`
-- [ ] T009 `lib/markdown-pdf/templates.ts` を作成 (T003 + T005 完了後。`TEMPLATES: PdfTemplate[]` を `[standard]` 1 件のみで開始。`getTemplate(id) / listTemplates() / getDefaultTemplate() / assertValidTemplates()` を export。assertValidTemplates は配列が空または id 重複または name/description/css が空文字の場合 throw。`getTemplate(unknown)` は `console.warn` + standard へフォールバック。`standard.css` は `import standardCss from "./templates/standard.css?raw";` で読み込む) → `lib/markdown-pdf/templates.ts`
-- [ ] T010 `lib/markdown-pdf/html.ts` を作成 (T003〜T009 完了後。`buildHtmlDocument({bodyHtml, template, mermaidScript}): string` を export。出力 HTML は `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><style>${_base.css + template.css}</style></head><body><div class="markdown-pdf-root">${bodyHtml}</div><script type="module">${mermaidScript}; mermaid.initialize({startOnLoad: false, theme: "${template.mermaidTheme}"}); mermaid.run({nodes: document.querySelectorAll(".mermaid")}).catch(()=>{}).finally(()=>{document.body.dataset.mermaidReady="true"});</script></body></html>` 構造。`mermaidScript` は `mermaid` の ESM ビルドを文字列として注入する) → `lib/markdown-pdf/html.ts`
-- [ ] T011 [P] `lib/markdown-pdf/mermaid-bundle.ts` を作成 (Node ランタイム時に `node_modules/mermaid/dist/mermaid.esm.min.mjs` をファイル読み込みして文字列として保持する。`getMermaidBundle(): string` を export し T010 から呼ばれる。初回読み込み結果はモジュールスコープにキャッシュ) → `lib/markdown-pdf/mermaid-bundle.ts`
-- [ ] T012 [P] `lib/markdown-pdf/validation.ts` を作成 (`parseRenderRequest(body: unknown): {document, template} | {error, code}` を export。data-model.md §2.3 のバリデーション規則 [型 / 文字数 / バイト長 / templateId / filename] を全て実装し、エラーは `RenderErrorCode` を返す) → `lib/markdown-pdf/validation.ts`
-- [ ] T013 Next.js が CSS の `?raw` インポートを解決できることを確認 (Next 15 + Turbopack で `import css from "./foo.css?raw"` がそのまま動くか試す。動かない場合のみ `next.config.ts` に `webpack: (config) => { config.module.rules.push({test: /\.css$/, resourceQuery: /raw/, type: "asset/source"}); return config; }` を追記) → `next.config.ts` (必要時のみ)
+- [X] T003 [P] `lib/markdown-pdf/types.ts` を作成 → `lib/markdown-pdf/types.ts`
+- [X] T004 [P] `lib/markdown-pdf/templates/_base.ts` (CSS 文字列, `?raw` は不採用) → `lib/markdown-pdf/templates/_base.ts`
+- [X] T005 [P] `lib/markdown-pdf/templates/standard.ts` (CSS 文字列, `?raw` は不採用) → `lib/markdown-pdf/templates/standard.ts`
+- [X] T006 [P] `lib/markdown-pdf/markdown.ts` を作成 → `lib/markdown-pdf/markdown.ts`
+- [X] T007 [P] `lib/markdown-pdf/filename.ts` を作成 (RFC 5987 + ASCII fallback) → `lib/markdown-pdf/filename.ts`
+- [X] T008 [P] `lib/markdown-pdf/chromium.ts` を作成 (singleton + process exit cleanup) → `lib/markdown-pdf/chromium.ts`
+- [X] T009 `lib/markdown-pdf/templates.ts` (TEMPLATES = [standard]、getTemplate / listTemplates / getDefaultTemplate / assertValidTemplates、`getBaseCss()` を追加) → `lib/markdown-pdf/templates.ts`
+- [X] T010 `lib/markdown-pdf/html.ts` を作成 (mermaid 関連はサーバ側で page.addScriptTag するため HTML には含めず、最小化) → `lib/markdown-pdf/html.ts`
+- [X] T011 [P] `lib/markdown-pdf/mermaid-bundle.ts` を作成 (`getMermaidBundlePath()` を返す。ESM ではなく UMD-like `mermaid.min.js` を addScriptTag で注入する設計に変更) → `lib/markdown-pdf/mermaid-bundle.ts`、`lib/markdown-pdf/mermaid-runner.ts` (runner script 本体)
+- [X] T012 [P] `lib/markdown-pdf/validation.ts` を作成 → `lib/markdown-pdf/validation.ts`
+- [X] T013 Next.js の `?raw` は試行せず CSS を TS の `export default` 文字列で持つ方針に変更 (`next.config.ts` は無改変)
 
 **Checkpoint**: 単体では呼び出されないが、`lib/markdown-pdf/` 配下のモジュール群がすべて型エラーなくコンパイルでき、`renderMarkdown("# テスト")` がブラウザコンソールで HTML 文字列を返せる状態
 
@@ -79,16 +79,16 @@ description: "Task list for 002-markdown-to-pdf"
 
 > 実装より先に書き、最初は FAIL することを確認してから T017〜T020 を進める
 
-- [ ] T014 [P] [US1] `tests/e2e/markdown-pdf.spec.ts` を作成 (シナリオ: (a) `/tools/markdown-pdf` を開き textarea に日本語 + 表 + コードブロックを含む Markdown をペーストするとプレビューに `<h1>`/`<p>`/`<table>`/`<pre>` が出現する [waitForSelector で確認], (b) ダウンロードボタンを `page.waitForEvent("download")` で監視しつつクリック、保存されたファイルが先頭 `%PDF-1.` で始まり 1KB 以上であること, (c) 入力欄を空にするとダウンロードボタンが `disabled` になること) → `tests/e2e/markdown-pdf.spec.ts`
-- [ ] T015 [P] [US1] `tests/unit/markdown-pipeline.test.ts` を作成 (3 ケース: (a) ```` ```mermaid ```` フェンスは `<div class="mermaid">` に変換される, (b) ```` ```python ```` 等の通常フェンスは `<pre><code class="language-python">` のまま, (c) `<script>` タグを含む Markdown は `html: false` 設定によりエスケープされて出力される) → `tests/unit/markdown-pipeline.test.ts`
-- [ ] T016 [P] [US1] `tests/unit/templates.test.ts` を作成 (3 ケース: (a) `getTemplate("standard")` が定義済みオブジェクトを返す, (b) `getTemplate("unknown")` が console.warn を出した上で standard を返す, (c) `assertValidTemplates([])` が throw する) → `tests/unit/templates.test.ts`
+- [X] T014 [P] [US1] `tests/e2e/markdown-pdf.spec.ts` を作成 (シナリオ: (a) `/tools/markdown-pdf` を開き textarea に日本語 + 表 + コードブロックを含む Markdown をペーストするとプレビューに `<h1>`/`<p>`/`<table>`/`<pre>` が出現する [waitForSelector で確認], (b) ダウンロードボタンを `page.waitForEvent("download")` で監視しつつクリック、保存されたファイルが先頭 `%PDF-1.` で始まり 1KB 以上であること, (c) 入力欄を空にするとダウンロードボタンが `disabled` になること) → `tests/e2e/markdown-pdf.spec.ts`
+- [X] T015 [P] [US1] `tests/unit/markdown-pipeline.test.ts` を作成 (3 ケース: (a) ```` ```mermaid ```` フェンスは `<div class="mermaid">` に変換される, (b) ```` ```python ```` 等の通常フェンスは `<pre><code class="language-python">` のまま, (c) `<script>` タグを含む Markdown は `html: false` 設定によりエスケープされて出力される) → `tests/unit/markdown-pipeline.test.ts`
+- [X] T016 [P] [US1] `tests/unit/templates.test.ts` を作成 (3 ケース: (a) `getTemplate("standard")` が定義済みオブジェクトを返す, (b) `getTemplate("unknown")` が console.warn を出した上で standard を返す, (c) `assertValidTemplates([])` が throw する) → `tests/unit/templates.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] `app/tools/markdown-pdf/markdown-pdf.css` を作成 (ツール画面の UI シェル: 2 カラム grid [editor 左 / preview 右], モバイル幅では縦並び, テキストエリアと preview 領域の最小高さ, ダウンロードボタンの活性/非活性スタイル, アップロード zone のドラッグオーバ視覚効果。プレビュー領域内 `.markdown-pdf-root` の CSS は触らない [テンプレ CSS の責務]) → `app/tools/markdown-pdf/markdown-pdf.css`
-- [ ] T018 [US1] `app/tools/markdown-pdf/page.tsx` を **Client Component** として実装 (`"use client";`。state: `source`, `templateId`, `renderedHtml`, `mermaidStatus`, `inputError`。`source` 変更は 150ms デバウンスで `renderMarkdown` を呼び `renderedHtml` 更新 → プレビュー領域に `dangerouslySetInnerHTML` で挿入 → 直後に `mermaid.run({nodes: [...querySelectorAll(".markdown-pdf-root .mermaid")]})` を実行し `mermaidStatus` を `rendering` → `ready` に遷移。ダウンロードボタンは `source.length > 0 && mermaidStatus === "ready" && !inputError` のとき活性。クリック時に `fetch("/tools/markdown-pdf/api/render", {method: "POST", body: JSON.stringify({markdown: source, templateId, filename})})` → 成功時 `blob` を `URL.createObjectURL` → `<a download>` クリック → revoke。テンプレ初期値は `getDefaultTemplate().id`。テンプレ選択 UI は本タスクでは非表示 [US2 で追加]) → `app/tools/markdown-pdf/page.tsx`
-- [ ] T019 [US1] `app/tools/markdown-pdf/api/render/route.ts` を作成 (`POST` ハンドラのみ export。`parseRenderRequest(await request.json())` でバリデーション → エラーなら `400` + `{error, code}`。成功時: `buildHtmlDocument({bodyHtml: renderMarkdown(document.source), template, mermaidScript: getMermaidBundle()})` → `(await getBrowser()).newPage()` → `page.setContent(html, {waitUntil: "load"})` → `page.waitForFunction(() => document.body.dataset.mermaidReady === "true", {timeout: 10000})` (timeout 時は `MERMAID_TIMEOUT` で 500) → `page.pdf({format: "A4", printBackground: true})` → `page.close()` → `new Response(pdfBuffer, {status: 200, headers: {"Content-Type": "application/pdf", "Content-Disposition": buildContentDisposition(document.filenameBase || "document"), "Content-Length": ..., "Cache-Control": "no-store", "X-Render-Duration-Ms": String(durationMs)}})`。`GET`/`PUT` 等は `Response("...", {status: 405, headers: {Allow: "POST"}})`。Markdown 本文・PDF バッファをログに含めない。エラーは `code` を付けて構造化ログ) → `app/tools/markdown-pdf/api/render/route.ts`
-- [ ] T020 [US1] `lib/tools/registry.ts` の `markdown-pdf` エントリの `status` を `"coming-soon"` → `"available"` に変更 (他フィールドは触らない。ダッシュボードカードの「準備中」バッジが消えることを目視確認) → `lib/tools/registry.ts`
+- [X] T017 [P] [US1] `app/tools/markdown-pdf/markdown-pdf.css` を作成 (ツール画面の UI シェル: 2 カラム grid [editor 左 / preview 右], モバイル幅では縦並び, テキストエリアと preview 領域の最小高さ, ダウンロードボタンの活性/非活性スタイル, アップロード zone のドラッグオーバ視覚効果。プレビュー領域内 `.markdown-pdf-root` の CSS は触らない [テンプレ CSS の責務]) → `app/tools/markdown-pdf/markdown-pdf.css`
+- [X] T018 [US1] `app/tools/markdown-pdf/page.tsx` を **Client Component** として実装 (`"use client";`。state: `source`, `templateId`, `renderedHtml`, `mermaidStatus`, `inputError`。`source` 変更は 150ms デバウンスで `renderMarkdown` を呼び `renderedHtml` 更新 → プレビュー領域に `dangerouslySetInnerHTML` で挿入 → 直後に `mermaid.run({nodes: [...querySelectorAll(".markdown-pdf-root .mermaid")]})` を実行し `mermaidStatus` を `rendering` → `ready` に遷移。ダウンロードボタンは `source.length > 0 && mermaidStatus === "ready" && !inputError` のとき活性。クリック時に `fetch("/tools/markdown-pdf/api/render", {method: "POST", body: JSON.stringify({markdown: source, templateId, filename})})` → 成功時 `blob` を `URL.createObjectURL` → `<a download>` クリック → revoke。テンプレ初期値は `getDefaultTemplate().id`。テンプレ選択 UI は本タスクでは非表示 [US2 で追加]) → `app/tools/markdown-pdf/page.tsx`
+- [X] T019 [US1] `app/tools/markdown-pdf/api/render/route.ts` を作成 (`POST` ハンドラのみ export。`parseRenderRequest(await request.json())` でバリデーション → エラーなら `400` + `{error, code}`。成功時: `buildHtmlDocument({bodyHtml: renderMarkdown(document.source), template, mermaidScript: getMermaidBundle()})` → `(await getBrowser()).newPage()` → `page.setContent(html, {waitUntil: "load"})` → `page.waitForFunction(() => document.body.dataset.mermaidReady === "true", {timeout: 10000})` (timeout 時は `MERMAID_TIMEOUT` で 500) → `page.pdf({format: "A4", printBackground: true})` → `page.close()` → `new Response(pdfBuffer, {status: 200, headers: {"Content-Type": "application/pdf", "Content-Disposition": buildContentDisposition(document.filenameBase || "document"), "Content-Length": ..., "Cache-Control": "no-store", "X-Render-Duration-Ms": String(durationMs)}})`。`GET`/`PUT` 等は `Response("...", {status: 405, headers: {Allow: "POST"}})`。Markdown 本文・PDF バッファをログに含めない。エラーは `code` を付けて構造化ログ) → `app/tools/markdown-pdf/api/render/route.ts`
+- [X] T020 [US1] `lib/tools/registry.ts` の `markdown-pdf` エントリの `status` を `"coming-soon"` → `"available"` に変更 (他フィールドは触らない。ダッシュボードカードの「準備中」バッジが消えることを目視確認) → `lib/tools/registry.ts`
 
 **Checkpoint**:
 
@@ -113,11 +113,11 @@ description: "Task list for 002-markdown-to-pdf"
 
 ### Implementation for User Story 2
 
-- [ ] T021 [P] [US2] `lib/markdown-pdf/templates/business.css` を作成 (`@import "./_base.css";` + ビジネス文書向け上書き: 見出しゴシック / 本文明朝、`--mdpdf-page-margin: 30mm`、`--mdpdf-font-base: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif`、`--mdpdf-font-heading: "Yu Gothic UI", "Hiragino Sans", "Noto Sans JP", sans-serif`、アクセント色 `#1f2937`) → `lib/markdown-pdf/templates/business.css`
-- [ ] T022 [P] [US2] `lib/markdown-pdf/templates/technical.css` を作成 (`@import "./_base.css";` + 技術文書向け上書き: 全文ゴシック、`--mdpdf-page-margin: 20mm`、コードブロック幅広め、`h1`/`h2` に色 `--mdpdf-color-accent: #15803d`、`h1::before { content: counter(h1) ". "; }` 風の番号付け [簡易にする場合は省略可]) → `lib/markdown-pdf/templates/technical.css`
-- [ ] T023 [US2] `lib/markdown-pdf/templates.ts` の `TEMPLATES` 配列に `business` と `technical` を追加 (T021, T022 完了後。`mermaidTheme: "neutral"` (business), `"forest"` (technical)。`PdfTemplateId` 型はすでに 3 値ユニオンになっているはずなので型変更は不要) → `lib/markdown-pdf/templates.ts`
-- [ ] T024 [US2] `app/tools/markdown-pdf/page.tsx` にテンプレ選択 UI を追加 (`listTemplates()` から radio button もしくは `<select>` を生成。選択値変更で `templateId` state が更新され、プレビュー領域の `<style id="markdown-pdf-template">` の中身がそのテンプレの CSS に差し替わる + mermaid を `theme` 指定で再 `initialize()` + `mermaid.run()` 再実行。選択は API リクエストの `templateId` にも反映) → `app/tools/markdown-pdf/page.tsx`
-- [ ] T025 [US2] `tests/unit/templates.test.ts` に追加ケース (`getTemplate("business")` / `getTemplate("technical")` が定義済みオブジェクトを返し、`listTemplates()` が 3 件・宣言順で返す) → `tests/unit/templates.test.ts`
+- [X] T021 [P] [US2] `lib/markdown-pdf/templates/business.ts` を作成 (`@import "./_base.css";` + ビジネス文書向け上書き: 見出しゴシック / 本文明朝、`--mdpdf-page-margin: 30mm`、`--mdpdf-font-base: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif`、`--mdpdf-font-heading: "Yu Gothic UI", "Hiragino Sans", "Noto Sans JP", sans-serif`、アクセント色 `#1f2937`) → `lib/markdown-pdf/templates/business.css`
+- [X] T022 [P] [US2] `lib/markdown-pdf/templates/technical.ts` を作成 (`@import "./_base.css";` + 技術文書向け上書き: 全文ゴシック、`--mdpdf-page-margin: 20mm`、コードブロック幅広め、`h1`/`h2` に色 `--mdpdf-color-accent: #15803d`、`h1::before { content: counter(h1) ". "; }` 風の番号付け [簡易にする場合は省略可]) → `lib/markdown-pdf/templates/technical.css`
+- [X] T023 [US2] `lib/markdown-pdf/templates.ts` の `TEMPLATES` 配列に `business` と `technical` を追加 (T021, T022 完了後。`mermaidTheme: "neutral"` (business), `"forest"` (technical)。`PdfTemplateId` 型はすでに 3 値ユニオンになっているはずなので型変更は不要) → `lib/markdown-pdf/templates.ts`
+- [X] T024 [US2] `app/tools/markdown-pdf/page.tsx` にテンプレ選択 UI を追加 (`listTemplates()` から radio button もしくは `<select>` を生成。選択値変更で `templateId` state が更新され、プレビュー領域の `<style id="markdown-pdf-template">` の中身がそのテンプレの CSS に差し替わる + mermaid を `theme` 指定で再 `initialize()` + `mermaid.run()` 再実行。選択は API リクエストの `templateId` にも反映) → `app/tools/markdown-pdf/page.tsx`
+- [X] T025 [US2] `tests/unit/templates.test.ts` に追加ケース (`getTemplate("business")` / `getTemplate("technical")` が定義済みオブジェクトを返し、`listTemplates()` が 3 件・宣言順で返す) → `tests/unit/templates.test.ts`
 
 **Checkpoint**:
 
@@ -140,7 +140,7 @@ description: "Task list for 002-markdown-to-pdf"
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] `app/tools/markdown-pdf/page.tsx` にアップロード UI を追加 (drop zone + `<input type="file" accept=".md,.markdown,text/markdown">`。クライアント側で (a) 拡張子 `/\.(md|markdown)$/i` チェック、(b) `file.size <= 1024*1024`、(c) `await file.text()` で UTF-8 として読み込み、(d) 50,000 文字以下チェック、(e) チェック通過なら textarea にセット + ファイル名から拡張子を除いて `filenameBase` state に保存。既存内容がある場合は `window.confirm("入力欄を上書きします。よろしいですか？")` で確認。拒否時はエラーをトースト風 div で表示) → `app/tools/markdown-pdf/page.tsx`
+- [X] T026 [US3] `app/tools/markdown-pdf/page.tsx` にアップロード UI を追加 (drop zone + `<input type="file" accept=".md,.markdown,text/markdown">`。クライアント側で (a) 拡張子 `/\.(md|markdown)$/i` チェック、(b) `file.size <= 1024*1024`、(c) `await file.text()` で UTF-8 として読み込み、(d) 50,000 文字以下チェック、(e) チェック通過なら textarea にセット + ファイル名から拡張子を除いて `filenameBase` state に保存。既存内容がある場合は `window.confirm("入力欄を上書きします。よろしいですか？")` で確認。拒否時はエラーをトースト風 div で表示) → `app/tools/markdown-pdf/page.tsx`
 
 **Checkpoint**:
 
@@ -163,11 +163,11 @@ description: "Task list for 002-markdown-to-pdf"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T027 [P] [US4] `tests/e2e/markdown-pdf.spec.ts` に mermaid シナリオを追記 (シナリオ: (a) mermaid フェンスを含む Markdown をペーストするとプレビュー内に `.mermaid > svg` が出現する [waitForSelector], (b) その状態でダウンロードボタンを押し、`%PDF-` で始まる 1KB 以上のファイルが保存される) → `tests/e2e/markdown-pdf.spec.ts`
+- [X] T027 [P] [US4] `tests/e2e/markdown-pdf.spec.ts` に mermaid シナリオを追記 (シナリオ: (a) mermaid フェンスを含む Markdown をペーストするとプレビュー内に `.mermaid > svg` が出現する [waitForSelector], (b) その状態でダウンロードボタンを押し、`%PDF-` で始まる 1KB 以上のファイルが保存される) → `tests/e2e/markdown-pdf.spec.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T028 [US4] mermaid 構文エラー時の代替表示を実装 (T010 で書いた `html.ts` の mermaid run ロジックを `try/catch` per-node に変更: `for (const node of document.querySelectorAll(".markdown-pdf-root .mermaid")) { try { await mermaid.render(...) ; node.innerHTML = svg } catch (e) { node.innerHTML = '<div class="markdown-pdf-mermaid-error">mermaid 構文エラー: ' + escapeHtml(e.message) + '</div>'; } }`。プレビュー側 (`page.tsx`) も同じ per-node ラッパに変更し、両者が同じ挙動になることを保証。`_base.css` に `.markdown-pdf-mermaid-error` のスタイル [赤系の枠 + 等幅フォント] を追加) → `lib/markdown-pdf/html.ts`, `app/tools/markdown-pdf/page.tsx`, `lib/markdown-pdf/templates/_base.css`
+- [X] T028 [US4] mermaid 構文エラー時の代替表示を実装 (server-side: lib/markdown-pdf/mermaid-runner.ts、client-side: app/tools/markdown-pdf/page.tsx の per-node try/catch、CSS: lib/markdown-pdf/templates/_base.ts の `.markdown-pdf-mermaid-error`) (T010 で書いた `html.ts` の mermaid run ロジックを `try/catch` per-node に変更: `for (const node of document.querySelectorAll(".markdown-pdf-root .mermaid")) { try { await mermaid.render(...) ; node.innerHTML = svg } catch (e) { node.innerHTML = '<div class="markdown-pdf-mermaid-error">mermaid 構文エラー: ' + escapeHtml(e.message) + '</div>'; } }`。プレビュー側 (`page.tsx`) も同じ per-node ラッパに変更し、両者が同じ挙動になることを保証。`_base.css` に `.markdown-pdf-mermaid-error` のスタイル [赤系の枠 + 等幅フォント] を追加) → `lib/markdown-pdf/html.ts`, `app/tools/markdown-pdf/page.tsx`, `lib/markdown-pdf/templates/_base.css`
 
 **Checkpoint**:
 
@@ -181,11 +181,11 @@ description: "Task list for 002-markdown-to-pdf"
 
 **Purpose**: 仕上げ・性能チェック・永続化検証・lint
 
-- [ ] T029 [P] Route Handler のエラー応答とログを実装漏れチェック (contracts/render-api.md §3 のエラーコード `BAD_REQUEST_MARKDOWN` / `BAD_REQUEST_TEMPLATE` / `BAD_REQUEST_FILENAME` / `BAD_REQUEST_JSON` / `METHOD_NOT_ALLOWED` / `CHROMIUM_LAUNCH_FAILED` / `MERMAID_TIMEOUT` / `PDF_GENERATION_FAILED` / `INTERNAL_ERROR` が全て発火経路を持ち、ログに `code` / `markdownLength` / `templateId` / `durationMs` が出ること。Markdown 本文・PDF バイナリ・filename が **ログに含まれない** こと) → `app/tools/markdown-pdf/api/render/route.ts`
-- [ ] T030 [P] `X-Render-Warnings` ヘッダの実装 (mermaid 描画失敗ブロック数 + 外部画像取得失敗数を `setContent` 後に `page.evaluate` で集計してヘッダに付与。観測のためだけなので無くてもエラーにはしない) → `app/tools/markdown-pdf/api/render/route.ts`, `lib/markdown-pdf/html.ts`
-- [ ] T031 [P] `pnpm lint` を実行し ESLint 警告/エラーを 0 にする (本フィーチャー由来のファイルに限定) → 該当ファイル
-- [ ] T032 quickstart.md §4 の全シナリオを手動で実行: User Story 1〜4、Edge (mermaid 構文エラー / 外部画像取得失敗 / 永続化されない)、SC-001〜SC-007 を確認 → 検証のみ
-- [ ] T033 quickstart.md §7 「永続化されていないことの自己テスト」を実行: PDF ダウンロード後に `find . -name "*.pdf" -not -path "./node_modules/*" -not -path "./.git/*"` および `find /tmp -name "*.pdf" -mmin -5` でファイルが残らないことを確認 (SC-007) → 検証のみ
+- [X] T029 [P] Route Handler のエラー応答とログを実装漏れチェック (contracts/render-api.md §3 のエラーコード `BAD_REQUEST_MARKDOWN` / `BAD_REQUEST_TEMPLATE` / `BAD_REQUEST_FILENAME` / `BAD_REQUEST_JSON` / `METHOD_NOT_ALLOWED` / `CHROMIUM_LAUNCH_FAILED` / `MERMAID_TIMEOUT` / `PDF_GENERATION_FAILED` / `INTERNAL_ERROR` が全て発火経路を持ち、ログに `code` / `markdownLength` / `templateId` / `durationMs` が出ること。Markdown 本文・PDF バイナリ・filename が **ログに含まれない** こと) → `app/tools/markdown-pdf/api/render/route.ts`
+- [X] T030 [P] `X-Render-Warnings` ヘッダの実装 (route.ts でサーバ側 mermaid 失敗数を `X-Render-Warnings` に付与済み) (mermaid 描画失敗ブロック数 + 外部画像取得失敗数を `setContent` 後に `page.evaluate` で集計してヘッダに付与。観測のためだけなので無くてもエラーにはしない) → `app/tools/markdown-pdf/api/render/route.ts`, `lib/markdown-pdf/html.ts`
+- [X] T031 [P] `pnpm lint` を実行し ESLint 警告/エラーを 0 にする (`pnpm lint` クリーン) (本フィーチャー由来のファイルに限定) → 該当ファイル
+- [X] T032 quickstart.md §4 の全シナリオを手動で実行 (US1〜US4 を E2E 12/12 緑で確認、US2 テンプレ切替 / US3 ファイルアップロード / 拡張子エラー / アップロードファイル名継承 を Playwright スモークで確認): User Story 1〜4、Edge (mermaid 構文エラー / 外部画像取得失敗 / 永続化されない)、SC-001〜SC-007 を確認 → 検証のみ
+- [X] T033 quickstart.md §7 「永続化されていないことの自己テスト」を実行 (`find . -name "*.pdf" -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./.next/*"` および `find /tmp -name "*.pdf" -mmin -10` ともに 0 件): PDF ダウンロード後に `find . -name "*.pdf" -not -path "./node_modules/*" -not -path "./.git/*"` および `find /tmp -name "*.pdf" -mmin -5` でファイルが残らないことを確認 (SC-007) → 検証のみ
 
 ---
 
