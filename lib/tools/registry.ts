@@ -10,7 +10,7 @@ const RAW_TOOLS: Tool[] = [
     name: "Markdown → PDF",
     description: "日本語と mermaid を含む Markdown を PDF に書き出す",
     category: "text",
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "time-convert",
