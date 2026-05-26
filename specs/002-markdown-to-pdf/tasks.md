@@ -189,6 +189,32 @@ description: "Task list for 002-markdown-to-pdf"
 
 ---
 
+## Phase 8: Follow-up — PDF 拡大縮小 (post-implement)
+
+**Purpose**: 実装完了後、利用者要望「PDF 化時にドキュメント拡大縮小を指定したい」に対応する追加機能。プリセット 50/75/100/125/150/200% から選択、プレビューと PDF を CSS `zoom` と Playwright `page.pdf({scale})` で連動、永続化なし (セッションのみ)。
+
+**Goal**: ツールバーの「拡大率」プルダウンで倍率を切り替えると、プレビューとダウンロードされる PDF の見た目が同じ倍率で拡大縮小される。
+
+**Independent Test**:
+
+1. `/tools/markdown-pdf` で任意の Markdown を入力
+2. 「拡大率」プルダウンで `50%` → `100%` → `150%` と切替
+3. プレビューが切替に追従して拡縮することを確認
+4. 各倍率で PDF をダウンロードし、PDF 内のテキストサイズが切替に追従していることを確認
+
+### Implementation (already done in follow-up commit)
+
+- [X] T034 `lib/markdown-pdf/types.ts` に `RenderRequest.scale?` と `MIN_SCALE` / `MAX_SCALE` / `DEFAULT_SCALE` 定数、エラーコード `BAD_REQUEST_SCALE` を追加 → `lib/markdown-pdf/types.ts`
+- [X] T035 `lib/markdown-pdf/validation.ts` で `scale` を 0.5〜2.0 範囲の有限数として検証 (未指定なら DEFAULT_SCALE) + `app/tools/markdown-pdf/api/render/route.ts` で `page.pdf({scale})` に伝搬しログにも記録 → `lib/markdown-pdf/validation.ts`, `app/tools/markdown-pdf/api/render/route.ts`
+- [X] T036 `app/tools/markdown-pdf/page.tsx` に「拡大率」プルダウン (50/75/100/125/150/200%) を追加、`scale` state を持ち、preview-root に `style={{ zoom: scale }}` を適用、API リクエストの `scale` フィールドに乗せる → `app/tools/markdown-pdf/page.tsx`
+
+**Checkpoint**:
+
+- Unit / E2E が引き続き全件パス
+- 手動で 50/100/200% を切り替えてプレビュー・PDF が一致することを確認
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

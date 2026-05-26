@@ -3,6 +3,7 @@ import type {
   PdfTemplate,
   RenderError,
 } from "./types";
+import { DEFAULT_SCALE, MAX_SCALE, MIN_SCALE } from "./types";
 import { getTemplate, isPdfTemplateId } from "./templates";
 
 const MAX_CHARS = 50_000;
@@ -13,6 +14,8 @@ const FILENAME_FORBIDDEN = /[\\/:*?"<>|\r\n]/;
 export interface ParsedRenderRequest {
   document: MarkdownDocument;
   template: PdfTemplate;
+  /** 検証済みの倍率。未指定や不正値はクライアントエラーになる。 */
+  scale: number;
 }
 
 export type ParseResult =
@@ -96,11 +99,32 @@ export function parseRenderRequest(body: unknown): ParseResult {
     filenameBase = obj.filename;
   }
 
+  let scale = DEFAULT_SCALE;
+  if (obj.scale !== undefined) {
+    if (typeof obj.scale !== "number" || !Number.isFinite(obj.scale)) {
+      return {
+        ok: false,
+        error: { error: "scale が数値ではありません", code: "BAD_REQUEST_SCALE" },
+      };
+    }
+    if (obj.scale < MIN_SCALE || obj.scale > MAX_SCALE) {
+      return {
+        ok: false,
+        error: {
+          error: `scale は ${MIN_SCALE}〜${MAX_SCALE} の範囲で指定してください`,
+          code: "BAD_REQUEST_SCALE",
+        },
+      };
+    }
+    scale = obj.scale;
+  }
+
   return {
     ok: true,
     data: {
       document: { source: markdown, filenameBase },
       template,
+      scale,
     },
   };
 }

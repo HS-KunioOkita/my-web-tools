@@ -13,10 +13,20 @@ import {
   listTemplates,
 } from "@/lib/markdown-pdf/templates";
 import type { PdfTemplateId } from "@/lib/markdown-pdf/types";
+import { DEFAULT_SCALE } from "@/lib/markdown-pdf/types";
 
 const MAX_CHARS = 50_000;
 const MAX_BYTES = 1 * 1024 * 1024;
 const DEBOUNCE_MS = 150;
+
+const SCALE_PRESETS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: 0.5, label: "50%" },
+  { value: 0.75, label: "75%" },
+  { value: 1.0, label: "100%" },
+  { value: 1.25, label: "125%" },
+  { value: 1.5, label: "150%" },
+  { value: 2.0, label: "200%" },
+];
 
 type MermaidStatus = "idle" | "rendering" | "ready" | "error";
 
@@ -58,6 +68,7 @@ export default function MarkdownPdfPage() {
   const [inputError, setInputError] = useState<InputError | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [scale, setScale] = useState<number>(DEFAULT_SCALE);
   const [filenameBase, setFilenameBase] = useState("");
   const [uploadFeedback, setUploadFeedback] = useState<UploadFeedback | null>(
     null,
@@ -253,6 +264,7 @@ export default function MarkdownPdfPage() {
           markdown: source,
           templateId,
           filename: filenameBase || undefined,
+          scale,
         }),
       });
       if (!res.ok) {
@@ -332,6 +344,22 @@ export default function MarkdownPdfPage() {
             {templates.map((t) => (
               <option key={t.id} value={t.id} title={t.description}>
                 {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mdpdf-toolbar-group">
+          <label htmlFor="mdpdf-scale">拡大率</label>
+          <select
+            id="mdpdf-scale"
+            data-test="scale-select"
+            value={String(scale)}
+            onChange={(e) => setScale(Number(e.target.value))}
+          >
+            {SCALE_PRESETS.map((p) => (
+              <option key={p.value} value={String(p.value)}>
+                {p.label}
               </option>
             ))}
           </select>
@@ -439,6 +467,11 @@ export default function MarkdownPdfPage() {
                 data-test="preview-root"
                 data-mermaid-status={mermaidStatus}
                 data-template={templateId}
+                data-scale={String(scale)}
+                // CSS `zoom` mirrors Playwright's page.pdf({scale}) — both
+                // scale layout including box sizes, so preview and PDF stay
+                // visually consistent.
+                style={{ zoom: scale }}
                 // Body is populated imperatively in useEffect to keep
                 // mermaid's SVG mutations from being clobbered on re-render.
                 suppressHydrationWarning

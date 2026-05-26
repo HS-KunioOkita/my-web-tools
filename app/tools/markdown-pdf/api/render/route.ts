@@ -52,7 +52,7 @@ export async function POST(request: Request): Promise<Response> {
     logEvent("warn", { code: result.error.code });
     return errorResponse(400, result.error.code, result.error.error);
   }
-  const { document, template } = result.data;
+  const { document, template, scale } = result.data;
   const markdownLength = document.source.length;
   const templateId = template.id;
 
@@ -122,7 +122,12 @@ export async function POST(request: Request): Promise<Response> {
       }
 
       const pdfBuffer = await Promise.race([
-        page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true }),
+        page.pdf({
+          format: "A4",
+          printBackground: true,
+          preferCSSPageSize: true,
+          scale,
+        }),
         new Promise<Buffer>((_, reject) =>
           setTimeout(() => reject(new Error("PDF_TIMEOUT")), PDF_TIMEOUT_MS),
         ),
@@ -133,6 +138,7 @@ export async function POST(request: Request): Promise<Response> {
         code: "OK",
         markdownLength,
         templateId,
+        scale,
         durationMs: duration,
         warnings,
         byteSize: pdfBuffer.length,
