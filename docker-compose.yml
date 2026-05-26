@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: my-web-tools-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # ホスト 5432 が占有されている場合に備えて 5433 を露出する
+      # .env の DATABASE_URL のポートと一致させること
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

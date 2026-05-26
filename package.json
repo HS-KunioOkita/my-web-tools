@@ -1,0 +1,38 @@
+{
+  "name": "my-web-tools",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "packageManager": "pnpm@11.3.0",
+  "type": "module",
+  "dependencies": {
+    "next": "^15.5.18",
+    "pg": "^8.21.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitest/coverage-v8": "^4.1.7",
+    "eslint": "^10.4.0",
+    "eslint-config-next": "^16.2.6",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.4",
+    "vitest": "^4.1.7"
+  }
+}
